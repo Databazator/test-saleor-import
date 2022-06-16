@@ -1,0 +1,39 @@
+# hostname of your service
+# (supports monorepositories! just add
+# one service section after the other)
+saleorbe:
+  # ==== how to build your application ====
+  build:
+    # select what technology should the
+    # build container be based on, can
+    # be different from service technology
+    # see docs for full list
+    base: [ python@3.8 ]
+    # *optional* add additional dependencies
+    # on top of base technology (combination
+    # will be cached for next build)
+            
+    # build your application
+    build:
+    - echo "Nothing to build." 
+        
+    # select which files / folders to deploy
+    # after the build succesfully finished
+    deploy: [ . ]
+  # ==== how to run your application ====
+  run:
+    # *optional* install dependencies that your
+    # runtime service requires (will be cached)
+    prepare:
+    - cd /var/www; git clone https://github.com/saleor/saleor.git
+    - apt update; apt install -y libpango1.0-dev
+    - cd /var/www/saleor; python3 -m venv saleor-venv
+    - cd /var/www/saleor; source saleor-venv/bin/activate; pip install -U pip; pip install -U wheel; pip install -U setuptools
+    ## debug ## - cd /var/www/saleor; source saleor-venv/bin/activate; python --version; which python; pip list    
+    - cd /var/www/saleor; source saleor-venv/bin/activate; pip install -r requirements.txt    
+    ### env DATABASE_URL=postgresql_connectionString/hostname exists! ###  
+    - cd /var/www/saleor; source saleor-venv/bin/activate; python manage.py migrate
+    - cd /var/www/saleor; source saleor-venv/bin/activate; python manage.py populatedb    
+    # how to start your application
+    ### env ALLOWED_HOSTS=saleorbe_subdomain(https-less) exists! ###
+    start: cd /var/www/saleor; source saleor-venv/bin/activate; python manage.py runserver 0.0.0.0:8000
